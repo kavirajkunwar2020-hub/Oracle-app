@@ -1,16 +1,6 @@
 streamlit
 pandas
-pandas_ta
-tradingview-ta
-pybit
-requests
-folium
-scikit-learn
-twilio
-matplotlib
-streamlit-folium
-streamlit
-pandas
 pandas-ta
 scikit-learn
 ccxt
+
