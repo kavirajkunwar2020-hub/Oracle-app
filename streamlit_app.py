@@ -5,6 +5,13 @@ from tradingview_ta import TA_Handler, Interval
 from sklearn.ensemble import RandomForestClassifier
 from twilio.rest import Client
 import numpy as np
+import streamlit as st
+import pandas as pd
+
+# --- STEP 1: INITIALIZE MEMORY ---
+# This ensures 'df' exists as soon as the app starts.
+if 'df' not in st.session_state:
+    st.session_state.df = pd.DataFrame() 
 
 # --- 1. SECRETS LOADING ---
 TWILIO_SID = st.secrets["TWILIO_SID"]
