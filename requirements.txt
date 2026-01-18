@@ -9,3 +9,8 @@ scikit-learn
 twilio
 matplotlib
 streamlit-folium
+streamlit
+pandas
+pandas-ta
+scikit-learn
+ccxt
