@@ -6,6 +6,21 @@ import pandas as pd
 # This ensures 'df' exists as soon as the app starts.
 if 'df' not in st.session_state:
     st.session_state.df = pd.DataFrame() 
+if st.button("🚀 Analyze"):
+    # Fetch your data
+    new_data = get_market_data(symbol) 
+    
+    # --- STEP 2: SAVE TO MEMORY ---
+    # We use st.session_state.df instead of just df
+    st.session_state.df = pd.DataFrame(new_data)
+    st.success("Market data loaded!")
+# --- STEP 3: READ FROM MEMORY ---
+# This will no longer show a NameError!
+if not st.session_state.df.empty:
+    st.write("Current Market Overview:")
+    st.dataframe(st.session_state.df)
+else:
+    st.info("Click 'Analyze' to load data.")
 
 import pandas as pd
 import pandas_ta as ta
