@@ -8,3 +8,4 @@ folium
 scikit-learn
 twilio
 matplotlib
+streamlit-folium
