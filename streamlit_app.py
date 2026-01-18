@@ -70,4 +70,82 @@ if not st.session_state.df.empty:
     st.success("Analysis Complete!")
 else:
     st.info("👈 Use the Sidebar to launch the Engine.")
+import streamlit as st
+import pandas as pd
+import pandas_ta as ta
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+import ccxt # For LIVE data
+
+# 1. SETUP THE LOOK
+st.set_page_config(page_title="K_ALPHA ORACLE", layout="wide", initial_sidebar_state="expanded")
+
+# Custom CSS to make it look like a Terminal
+st.markdown("""
+    <style>
+    .main { background-color: #0e1117; }
+    .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 10px; border_radius: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. LIVE DATA ENGINE
+def fetch_live_data(symbol):
+    exchange = ccxt.binance()
+    bars = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=100)
+    df = pd.DataFrame(bars, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+    return df
+
+# 3. THE "FOREST" LOGIC
+def run_ai_logic(df):
+    df['RSI'] = ta.rsi(df['close'], length=14)
+    df['EMA_20'] = ta.ema(df['close'], length=20)
+    df['target'] = np.where(df['close'].shift(-1) > df['close'], 1, 0)
+    df = df.dropna()
+    
+    X = df[['RSI', 'EMA_20']]
+    y = df['target']
+    
+    model = RandomForestClassifier(n_estimators=100, max_depth=5)
+    model.fit(X[:-1], y[:-1])
+    
+    prediction = model.predict(X.tail(1))[0]
+    prob = model.predict_proba(X.tail(1))[0]
+    return "BULLISH" if prediction == 1 else "BEARISH", max(prob) * 100
+
+# --- UI LAYOUT ---
+st.title("⚔️ K-ALPHA COMMAND CENTER")
+
+with st.sidebar:
+    st.header("CONTROL PANEL")
+    symbol = st.selectbox("ASSET", ["BTC/USDT", "ETH/USDT", "SOL/USDT"])
+    run_btn = st.button("EXECUTE ANALYSIS", use_container_width=True)
+
+if run_btn:
+    with st.status("Initializing Neural Forest...", expanded=True) as status:
+        st.write("📡 Fetching Live Binance Data...")
+        df = fetch_live_data(symbol)
+        
+        st.write("🌳 Generating 100 Decision Trees...")
+        signal, confidence = run_ai_logic(df)
+        
+        status.update(label="Analysis Complete!", state="complete", expanded=False)
+
+    # BIG NUMBERS AT THE TOP
+    current_price = df['close'].iloc[-1]
+    price_change = current_price - df['close'].iloc[-2]
+    
+    m1, m2, m3 = st.columns(3)
+    m1.metric("CURRENT PRICE", f"${current_price:,}", f"{price_change:.2f}")
+    m2.metric("AI SENTIMENT", signal)
+    m3.metric("CONFIDENCE", f"{confidence:.1f}%")
+
+    # THE CHART
+    st.subheader("Market Momentum")
+    st.area_chart(df.set_index('timestamp')['close'])
+    
+    # THE ALERTS
+    if confidence > 80:
+        st.success(f"🔥 HIGH CONFIDENCE SIGNAL: {signal}")
+    else:
+        st.warning("⚠️ Low Confidence - Neutral Market")
 
